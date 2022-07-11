@@ -6,9 +6,7 @@ import requests as rq
 import pathlib
 import json
 from randomcoordinatesinradius import random_coordinates
-import aiohttp
-import asyncio
-from OpenSSL import SSL
+
 #variables
 path = pathlib.Path(__file__).parent.resolve()
 token=str(os.environ.get("token_randLocBot"))
@@ -65,17 +63,13 @@ def main():
     print(tgUrl(''))
     logging.basicConfig(filename='bot.log', encoding='utf-8', level=logging.INFO, format='%(asctime)s %(levelname)s: %(message)s')
     rpost = rq.get(tgUrl('deleteWebhook'))
-    rpost = rq.get(tgUrl('setWebhook'), json={'url':''})
+    rpost = rq.get(tgUrl('setWebhook'), json={'url':'https://www.nonezonyx.ru/bots/randLocationBot'})
     if token == 'None':
         logging.critical('token is None')
         exit('Token is not selected')
     logging.info(f'file path = {path}')
     from waitress import serve
-    context = SSL.Context(SSL.PROTOCOL_TLSv1_2)
-    context.use_privatekey_file('certificate.key')
-    context.use_certificate_file('certificate.crt')   
-    serve(app, host="0.0.0.0", port=8443, ssl_context=context)
+    serve(app, host="0.0.0.0", port=443)
 
 if __name__ == '__main__':
     main()
-
