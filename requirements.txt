@@ -3,4 +3,3 @@ requests
 pathlib
 waitress
 haversine
-OpenSSL
