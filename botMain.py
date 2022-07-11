@@ -65,17 +65,14 @@ def main():
     print(tgUrl(''))
     logging.basicConfig(filename='bot.log', encoding='utf-8', level=logging.INFO, format='%(asctime)s %(levelname)s: %(message)s')
     rpost = rq.get(tgUrl('deleteWebhook'))
-    with open(f'{path}/remove.json', 'w') as f:
-        json.dump(rpost.json(), f, ensure_ascii=False, indent=4 )
-    rpost = rq.get(tgUrl('setWebhook'), json={'url':'https://8d60-164-215-54-40.eu.ngrok.io'})
-    with open(f'{path}/set.json', 'w') as f:
-        json.dump(rpost.json(), f, ensure_ascii=False, indent=4 )
+    rpost = rq.get(tgUrl('setWebhook'), json={'url':''})
     if token == 'None':
         logging.critical('token is None')
         exit('Token is not selected')
     logging.info(f'file path = {path}')
     from waitress import serve
-    serve(app, host="0.0.0.0", port=5000)
+    context = ('certificate.crt', 'certificate.key')
+    serve(app, host="0.0.0.0", port=5000, ssl_context=context)
 
 if __name__ == '__main__':
     main()
