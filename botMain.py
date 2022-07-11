@@ -8,7 +8,7 @@ import json
 from randomcoordinatesinradius import random_coordinates
 import aiohttp
 import asyncio
-
+from OpenSSL import SSL
 #variables
 path = pathlib.Path(__file__).parent.resolve()
 token=str(os.environ.get("token_randLocBot"))
