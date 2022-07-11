@@ -1,5 +1,3 @@
-logging
-os
 flask
 requests
 pathlib
