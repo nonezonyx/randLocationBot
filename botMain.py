@@ -1,5 +1,6 @@
 #!/usr/bin/env python
-import logging #logs
+
+import logging
 import os
 from flask import Flask, request, jsonify
 import requests as rq
@@ -9,7 +10,10 @@ from randomcoordinatesinradius import random_coordinates
 
 #variables
 path = pathlib.Path(__file__).parent.resolve()
-token=str(os.environ.get("token_randLocBot"))
+token_env='token_randLocBot'
+if token_env in os.environ:
+    token=str(os.environ[token_env])
+else: exit('token is None')
 tgUrl = lambda method: f"https://api.telegram.org/bot{token}/{method}"
 app = Flask(__name__)
 
@@ -54,22 +58,15 @@ def index():
         logging.info(r)
         processMessage(r['message'])
         return jsonify(r)
-    return('<h1>Hello bot</h1>')
-
-
+    return('<b>This Page Is Not For You :{</b>')
 
 #boot
 def main():
-    print(tgUrl(''))
     logging.basicConfig(filename='bot.log', encoding='utf-8', level=logging.INFO, format='%(asctime)s %(levelname)s: %(message)s')
-    rpost = rq.get(tgUrl('deleteWebhook'))
-    rpost = rq.get(tgUrl('setWebhook'), json={'url':'https://www.nonezonyx.ru/bots/randLocationBot'})
-    if token == 'None':
-        logging.critical('token is None')
-        exit('Token is not selected')
-    logging.info(f'file path = {path}')
+    rget = rq.get(tgUrl('deleteWebhook'))
+    rget = rq.get(tgUrl('setWebhook'), json={'url':f'https://nonezonyx.ru/bots/serving/randLocationBot'})
     from waitress import serve
-    serve(app, host="0.0.0.0", port=443)
+    serve(app, host="localhost", port=48654)
 
 if __name__ == '__main__':
     main()
