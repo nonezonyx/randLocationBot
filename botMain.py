@@ -54,6 +54,7 @@ def getDist(chat_id):
 @app.route('/', methods=['POST', 'GET'])
 def index():
     if request.method == 'POST':
+        logging.debug('PostMethod')
         r = request.get_json()
         logging.info(r)
         processMessage(r['message'])
@@ -62,7 +63,7 @@ def index():
 
 #boot
 def main():
-    logging.basicConfig(filename='bot.log', encoding='utf-8', level=logging.INFO, format='%(asctime)s %(levelname)s: %(message)s')
+    logging.basicConfig(filename=f'{path}/bot.log', encoding='utf-8', level=logging.DEBUG, format='%(asctime)s %(levelname)s: %(message)s')
     rget = rq.get(tgUrl('deleteWebhook'))
     rget = rq.get(tgUrl('setWebhook'), json={'url':f'https://nonezonyx.ru/bots/serving/randLocationBot'})
     from waitress import serve
