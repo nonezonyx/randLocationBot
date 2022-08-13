@@ -9,6 +9,9 @@ import json
 from randomcoordinatesinradius import random_coordinates
 
 #variables
+WEBHOOK_URL=""
+WBHOOK_PORT=
+
 path = pathlib.Path(__file__).parent.resolve()
 token_env='token_randLocBot'
 if token_env in os.environ:
@@ -16,6 +19,7 @@ if token_env in os.environ:
 else: exit('token is None')
 tgUrl = lambda method: f"https://api.telegram.org/bot{token}/{method}"
 app = Flask(__name__)
+WEBHOOK_URL=""
 
 def processMessage(message):
     if 'location' in message:
@@ -56,18 +60,18 @@ def index():
     if request.method == 'POST':
         logging.debug('PostMethod')
         r = request.get_json()
-        logging.info(r)
+        logging.debug(r)
         processMessage(r['message'])
         return jsonify(r)
     return('<b>This Page Is Not For You :{</b>')
 
 #boot
 def main():
-    logging.basicConfig(filename=f'{path}/bot.log', encoding='utf-8', level=logging.DEBUG, format='%(asctime)s %(levelname)s: %(message)s')
+    logging.basicConfig(filename=f'{path}/bot.log', encoding='utf-8', level=logging.WARNING, format='%(asctime)s %(levelname)s: %(message)s')
     rget = rq.get(tgUrl('deleteWebhook'))
-    rget = rq.get(tgUrl('setWebhook'), json={'url':f'https://nonezonyx.ru/bots/serving/randLocationBot'})
+    rget = rq.get(tgUrl('setWebhook'), json={'url':f'https://{WEBHOOK_URL}'})
     from waitress import serve
-    serve(app, host="localhost", port=48654)
+    serve(app, host="localhost", port=WBHOOK_PORT)
 
 if __name__ == '__main__':
     main()
