@@ -11,8 +11,8 @@ import asyncio
 import sqlite3
 
 #variables
-WEBHOOK_URL=""
-WBHOOK_PORT=
+WEBHOOK_URL="nonezonyx.ru/bots/serving/randLocationBot"
+WBHOOK_PORT=48654
 
 path = pathlib.Path(__file__).parent.resolve()
 token_env='token_randLocBot'
