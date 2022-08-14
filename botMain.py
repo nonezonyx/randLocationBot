@@ -29,7 +29,7 @@ cursor = db.cursor()
 
 
 
-async def processMessage(message):
+def processMessage(message):
     if 'location' in message:
         cursor.execute(f"SELECT distance FROM user_data WHERE id = {message['chat']['id']}")
         if cursor.fetchone() is None:
@@ -48,6 +48,8 @@ async def processMessage(message):
             if cursor.fetchone() is None:
                 cursor.execute("INSERT INTO user_data VALUES (?, ?)", (message['chat']['id'], distance))
                 db.commit()
+            else:
+                cursor.execute('''UPDATE user_data SET distance = ? WHERE id = ?''', (distance, message['chat']['id']))
             answer = {'chat_id':message['chat']['id'], 'text' : f"New distance is {distance}"}
             rpost = rq.post(tgUrl('sendMessage'), json=answer)
         except Exception as e:
@@ -59,15 +61,15 @@ def index():
     if request.method == 'POST':
         logging.debug('PostMethod')
         r = request.get_json()
-        asyncio.run(processMessage(r['message']))
+        processMessage(r['message'])
         return jsonify(r)
     return('<b>This Page Is Not For You :{</b>')
 
 #boot
 def main():
-    logging.basicConfig(filename=f'{path}/bot.log', encoding='utf-8', level=logging.WARNING, format='%(asctime)s %(levelname)s: %(message)s')
+    logging.basicConfig(filename=f'{path}/bot.log', encoding='utf-8', level=logging.DEBUG, format='%(asctime)s %(levelname)s: %(message)s')
     cursor.execute("CREATE TABLE IF NOT EXISTS user_data(id INT8, distance INT8)")
-    db.commit()
+    logging.debug('db processed')
     rget = rq.get(tgUrl('deleteWebhook'))
     rget = rq.get(tgUrl('setWebhook'), json={'url':f'https://{WEBHOOK_URL}'})
     from waitress import serve
