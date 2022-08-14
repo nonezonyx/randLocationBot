@@ -21,13 +21,10 @@ if token_env in environ:
 else: exit('token is None')
 tgUrl = lambda method: f"https://api.telegram.org/bot{token}/{method}"
 app = Flask(__name__)
-WEBHOOK_URL=""
 
 #database
 db = sqlite3.connect('randLocBot.db', check_same_thread=False)
 cursor = db.cursor()
-
-
 
 def processMessage(message):
     if 'location' in message:
@@ -37,7 +34,7 @@ def processMessage(message):
             db.commit()
             distance = 1000
         else:
-            distance = cursor.fetchone()
+            distance = distance = cursor.execute(f"SELECT distance FROM user_data WHERE id = {message['chat']['id']}").fetchone()[0]
         longitude, latitude = random_coordinates([message['location']['longitude'], message['location']['latitude']], distance)
         answer={'chat_id':message['chat']['id'], 'latitude':latitude, 'longitude':longitude}
         rpost = rq.post(tgUrl('sendLocation'), json=answer)
