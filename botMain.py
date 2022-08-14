@@ -24,7 +24,7 @@ app = Flask(__name__)
 WEBHOOK_URL=""
 
 #database
-db = sqlite3.connect('randLocBot.db')
+db = sqlite3.connect('randLocBot.db', check_same_thread=False)
 cursor = db.cursor()
 
 
