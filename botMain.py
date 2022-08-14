@@ -1,12 +1,14 @@
 #!/usr/bin/env python
 
 import logging
-import os
+from  os import environ
 from flask import Flask, request, jsonify
 import requests as rq
 import pathlib
 import json
 from randomcoordinatesinradius import random_coordinates
+import asyncio
+import sqlite3
 
 #variables
 WEBHOOK_URL=""
@@ -14,60 +16,58 @@ WBHOOK_PORT=
 
 path = pathlib.Path(__file__).parent.resolve()
 token_env='token_randLocBot'
-if token_env in os.environ:
-    token=str(os.environ[token_env])
+if token_env in environ:
+    token=str(environ[token_env])
 else: exit('token is None')
 tgUrl = lambda method: f"https://api.telegram.org/bot{token}/{method}"
 app = Flask(__name__)
 WEBHOOK_URL=""
 
-def processMessage(message):
+#database
+db = sqlite3.connect('randLocBot.db')
+cursor = db.cursor()
+
+
+
+async def processMessage(message):
     if 'location' in message:
-        longitude, latitude = random_coordinates([message['location']['longitude'], message['location']['latitude']], getDist(message['chat']['id']))
+        cursor.execute(f"SELECT distance FROM user_data WHERE id = {message['chat']['id']}")
+        if cursor.fetchone() is None:
+            cursor.execute("INSERT INTO user_data VALUES (?, ?)", (message['chat']['id'], 1000))
+            db.commit()
+            distance = 1000
+        else:
+            distance = cursor.fetchone()
+        longitude, latitude = random_coordinates([message['location']['longitude'], message['location']['latitude']], distance)
         answer={'chat_id':message['chat']['id'], 'latitude':latitude, 'longitude':longitude}
         rpost = rq.post(tgUrl('sendLocation'), json=answer)
     if 'text' in message:
-        if '/setdistance' in message['text']:
-            if os.path.exists(f'{path}/data.json'):
-                with open(f'{path}/data.json', 'r') as f:
-                    data = json.load(f)
-            else:
-                data={}
-            try:
-                data[str(message['chat']['id'])] = float(message['text'].replace('/setdistance', '').replace(' ',''))
-                rpost = rq.post(tgUrl('sendMessage'), json={'chat_id':message['chat']['id'], 'text': f"Current distance = <b>{float(message['text'].replace('/setdistance', '').replace(' ',''))}</b> meters.",'parse_mode':'HTML'})
-            except Exception as e:
-                logging.critical(e)
-                rpost = rq.post(tgUrl('sendMessage'), json={'chat_id':message['chat']['id'], 'text': "<i>command is incorrect.</i>\nTry '/setdistance %distance%'\n%distance% is any number of meters.",'parse_mode':'HTML'})
-                return 'ERROR'
-            with open(f'{path}/data.json', 'w') as f:
-                json.dump(data, f, ensure_ascii=False, indent=4 )
-        elif '/start' in message['text'] or '/help' in message['text']:
-            rpost = rq.post(tgUrl('sendMessage'), json={'chat_id':message['chat']['id'], 'text': "send me location and i'll send you random place nearby.\nUse '/setdistance' comand to to set max distans of location.",'parse_mode':'HTML'})
-        elif '/distance' in message['text']:
-            rpost = rq.post(tgUrl('sendMessage'), json={'chat_id':message['chat']['id'], 'text': f"Current distance = <b>{getDist(message['chat']['id'])}</b> meters.",'parse_mode':'HTML'})
-
-def getDist(chat_id):
-    if os.path.exists(f'{path}/data.json'):
-        with open(f'{path}/data.json', 'r') as f:
-            data = json.load(f)
-    else:
-        data={}
-    return float(data[str(chat_id)]) if str(chat_id) in data else 1000
+        try:
+            distance = int(message['text'])
+            cursor.execute(f"SELECT distance FROM user_data WHERE id = {message['chat']['id']}")
+            if cursor.fetchone() is None:
+                cursor.execute("INSERT INTO user_data VALUES (?, ?)", (message['chat']['id'], distance))
+                db.commit()
+            answer = {'chat_id':message['chat']['id'], 'text' : f"New distance is {distance}"}
+            rpost = rq.post(tgUrl('sendMessage'), json=answer)
+        except Exception as e:
+            answer = {'chat_id':message['chat']['id'], 'text' : f"Send me integer to set distance"}
+            rpost = rq.post(tgUrl('sendMessage'), json=answer)
 
 @app.route('/', methods=['POST', 'GET'])
 def index():
     if request.method == 'POST':
         logging.debug('PostMethod')
         r = request.get_json()
-        logging.debug(r)
-        processMessage(r['message'])
+        asyncio.run(processMessage(r['message']))
         return jsonify(r)
     return('<b>This Page Is Not For You :{</b>')
 
 #boot
 def main():
     logging.basicConfig(filename=f'{path}/bot.log', encoding='utf-8', level=logging.WARNING, format='%(asctime)s %(levelname)s: %(message)s')
+    cursor.execute("CREATE TABLE IF NOT EXISTS user_data(id INT8, distance INT8)")
+    db.commit()
     rget = rq.get(tgUrl('deleteWebhook'))
     rget = rq.get(tgUrl('setWebhook'), json={'url':f'https://{WEBHOOK_URL}'})
     from waitress import serve

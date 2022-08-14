@@ -3,3 +3,4 @@ requests
 pathlib
 waitress
 haversine
+asyncio
