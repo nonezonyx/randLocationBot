@@ -5,14 +5,12 @@ from  os import environ
 from flask import Flask, request, jsonify
 import requests as rq
 import pathlib
-import json
 from randomcoordinatesinradius import random_coordinates
-import asyncio
 import sqlite3
 
 #variables
-WEBHOOK_URL="nonezonyx.ru/bots/serving/randLocationBot"
-WBHOOK_PORT=48654
+WEBHOOK_URL=""
+WBHOOK_PORT=
 
 path = pathlib.Path(__file__).parent.resolve()
 token_env='token_randLocBot'
@@ -23,7 +21,7 @@ tgUrl = lambda method: f"https://api.telegram.org/bot{token}/{method}"
 app = Flask(__name__)
 
 #database
-db = sqlite3.connect('randLocBot.db', check_same_thread=False)
+db = sqlite3.connect('{path}/randLocBot.db', check_same_thread=False)
 cursor = db.cursor()
 
 def processMessage(message):
